@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valyuta va Shartnoma Bot</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #222222);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 400px;
+            margin: auto;
+        }
+        h2 {
+            text-align: center;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #999999);
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            color: var(--tg-theme-text-color, #222222);
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .result-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--tg-theme-secondary-bg-color, #f9f9f9);
+            border-radius: 8px;
+            font-size: 14px;
+            white-space: pre-line;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Universal Bank Valyuta</h2>
+        
+        <div class="form-group">
+            <label for="amount">Summani kiriting (UZS):</label>
+            <input type="number" id="amount" placeholder="Masalan: 1000000">
+        </div>
+
+        <button onclick="calculate()">Hisoblash</button>
+
+        <div class="result-box" id="result" style="display:none;"></div>
+        <button id="copyBtn" style="display:none; background-color: #28a745;" onclick="copyText()">Matnni nusxalash</button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        function numberToWordsUZ(n) {
+            if (n === 0) return "nol";
+            const birliklar = ["", "bir", "ikki", "uch", "to'rt", "besh", "olti", "yetti", "sakkiz", "to'qqiz"];
+            const onliklar = ["", "o'n", "yigirma", "o'ttiz", "qirq", "ellik", "oltmish", "yetmish", "sakson", "to'qson"];
+            let res = "";
+            if (n >= 1000000) {
+                let m = Math.floor(n / 1000000);
+                res += birliklar[m] + " million ";
+                n %= 1000000;
+            }
+            if (n >= 1000) {
+                let t = Math.floor(n / 1000);
+                if (t >= 100) { res += birliklar[Math.floor(t / 100)] + " yuz "; t %= 100; }
+                if (t >= 10) { res += onliklar[Math.floor(t / 10)] + " "; }
+                if (t % 10 > 0) { res += birliklar[t % 10] + " "; }
+                res += "ming ";
+                n %= 1000;
+            }
+            if (n >= 100) { res += birliklar[Math.floor(n / 100)] + " yuz "; n %= 100; }
+            if (n >= 10) { res += onliklar[Math.floor(n / 10)] + " "; n %= 10; }
+            if (n > 0) { res += birliklar[n] + " "; }
+            return res.trim();
+        }
+
+        function calculate() {
+            let val = document.getElementById('amount').value;
+            if(!val) {
+                alert("Iltimos summani kiriting!");
+                return;
+            }
+            let amount = parseFloat(val);
+            let usdSell = 11900;
+            let eurSell = 15000;
+
+            let usd = amount / usdSell;
+            let eur = amount / eurSell;
+            let uzWords = numberToWordsUZ(Math.round(amount));
+
+            let text = `🇺🇿 Shartnoma uchun (O'zbekcha):\n` +
+                       `${amount.toLocaleString()} UZS (${uzWords} so'm)\n` +
+                       `Ekvivalenti: $${usd.toFixed(2)} / €${eur.toFixed(2)}\n\n` +
+                       `🇷🇺 Для договора (Русский):\n` +
+                       `${amount.toLocaleString()} сум\n` +
+                       `Эквивалент: $${usd.toFixed(2)} / €${eur.toFixed(2)}`;
+
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('result').innerText = text;
+            document.getElementById('copyBtn').style.display = 'block';
+        }
+
+        function copyText() {
+            let textToCopy = document.getElementById('result').innerText;
+            navigator.clipboard.writeText(textToCopy);
+            tg.showAlert("Matn nusxalandi!");
+        }
+    </script>
+</body>
+</html>
